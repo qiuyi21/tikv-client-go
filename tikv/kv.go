@@ -234,10 +234,11 @@ func NewKVStore(uuid string, pdClient pd.Client, spkv SafePointKV, tikvclient Cl
 }
 
 // NewPDClient returns an unwrapped pd client.
-func NewPDClient(pdAddrs []string) (pd.Client, error) {
+func NewPDClientWithContext(ctx context.Context, pdAddrs []string) (pd.Client, error) {
 	cfg := config.GetGlobalConfig()
 	// init pd-client
-	pdCli, err := pd.NewClient(
+	pdCli, err := pd.NewClientWithContext(
+		ctx,
 		pdAddrs, pd.SecurityOption{
 			CAPath:   cfg.Security.ClusterSSLCA,
 			CertPath: cfg.Security.ClusterSSLCert,

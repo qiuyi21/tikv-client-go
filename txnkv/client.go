@@ -56,14 +56,14 @@ func WithAPIVersion(apiVersion kvrpcpb.APIVersion) ClientOpt {
 }
 
 // NewClient creates a txn client with pdAddrs.
-func NewClient(pdAddrs []string, opts ...ClientOpt) (*Client, error) {
+func NewClientWithContext(ctx context.Context, pdAddrs []string, opts ...ClientOpt) (*Client, error) {
 	// Apply options.
 	opt := &option{}
 	for _, o := range opts {
 		o(opt)
 	}
 	// Use an unwrapped PDClient to obtain keyspace meta.
-	pdClient, err := tikv.NewPDClient(pdAddrs)
+	pdClient, err := tikv.NewPDClientWithContext(ctx, pdAddrs)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
