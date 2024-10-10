@@ -311,7 +311,7 @@ func (s *KVStore) Begin(opts ...TxnOption) (txn *transaction.KVTxn, err error) {
 	if options.StartTS != nil {
 		startTS = *options.StartTS
 	} else {
-		bo := retry.NewBackofferWithVars(context.Background(), transaction.TsoMaxBackoff, nil)
+		bo := retry.NewBackofferWithVars(s.ctx, transaction.TsoMaxBackoff, nil)
 		startTS, err = s.getTimestampWithRetry(bo, options.TxnScope)
 		if err != nil {
 			return nil, err
@@ -342,6 +342,13 @@ func (s *KVStore) DeleteRange(
 // Specially, it is useful to set ts to math.MaxUint64 to point get the latest committed data.
 func (s *KVStore) GetSnapshot(ts uint64) *txnsnapshot.KVSnapshot {
 	snapshot := txnsnapshot.NewTiKVSnapshot(s, ts, s.nextReplicaReadSeed())
+	snapshot.Ctx = s.ctx
+	return snapshot
+}
+
+func (s *KVStore) GetSnapshotWithContext(ctx context.Context, ts uint64) *txnsnapshot.KVSnapshot {
+	snapshot := txnsnapshot.NewTiKVSnapshot(s, ts, s.nextReplicaReadSeed())
+	snapshot.Ctx = ctx
 	return snapshot
 }
 
@@ -378,7 +385,7 @@ func (s *KVStore) UUID() string {
 
 // CurrentTimestamp returns current timestamp with the given txnScope (local or global).
 func (s *KVStore) CurrentTimestamp(txnScope string) (uint64, error) {
-	bo := retry.NewBackofferWithVars(context.Background(), transaction.TsoMaxBackoff, nil)
+	bo := retry.NewBackofferWithVars(s.ctx, transaction.TsoMaxBackoff, nil)
 	startTS, err := s.getTimestampWithRetry(bo, txnScope)
 	if err != nil {
 		return 0, err

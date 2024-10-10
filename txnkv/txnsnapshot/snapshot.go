@@ -118,6 +118,7 @@ type KVSnapshot struct {
 	resolvedLocks   util.TSSet
 	committedLocks  util.TSSet
 	scanBatchSize   int
+	Ctx             context.Context
 
 	// Cache the result of BatchGet.
 	// The invariance is that calling BatchGet multiple times using the same start ts,
@@ -752,12 +753,14 @@ func (s *KVSnapshot) mergeExecDetail(detail *kvrpcpb.ExecDetailsV2) {
 // Iter return a list of key-value pair after `k`.
 func (s *KVSnapshot) Iter(k []byte, upperBound []byte) (unionstore.Iterator, error) {
 	scanner, err := newScanner(s, k, upperBound, s.scanBatchSize, false)
+	scanner.ctx = s.Ctx
 	return scanner, err
 }
 
 // IterReverse creates a reversed Iterator positioned on the first entry which key is less than k.
 func (s *KVSnapshot) IterReverse(k []byte) (unionstore.Iterator, error) {
 	scanner, err := newScanner(s, nil, k, s.scanBatchSize, true)
+	scanner.ctx = s.Ctx
 	return scanner, err
 }
 

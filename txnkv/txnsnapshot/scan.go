@@ -60,6 +60,7 @@ type Scanner struct {
 	idx          int
 	nextStartKey []byte
 	endKey       []byte
+	ctx          context.Context
 
 	// Use for reverse scan.
 	nextEndKey []byte
@@ -90,6 +91,13 @@ func newScanner(snapshot *KVSnapshot, startKey []byte, endKey []byte, batchSize 
 	return scanner, err
 }
 
+func (s *Scanner) getCtx() context.Context {
+	if s.ctx == nil {
+		return context.Background()
+	}
+	return s.ctx
+}
+
 // Valid return valid.
 func (s *Scanner) Valid() bool {
 	return s.valid
@@ -115,7 +123,7 @@ const scannerNextMaxBackoff = 20000
 
 // Next return next element.
 func (s *Scanner) Next() error {
-	bo := retry.NewBackofferWithVars(context.WithValue(context.Background(), retry.TxnStartKey, s.snapshot.version), scannerNextMaxBackoff, s.snapshot.vars)
+	bo := retry.NewBackofferWithVars(context.WithValue(s.getCtx(), retry.TxnStartKey, s.snapshot.version), scannerNextMaxBackoff, s.snapshot.vars)
 	if !s.valid {
 		return errors.New("scanner iterator is invalid")
 	}
@@ -181,8 +189,7 @@ func (s *Scanner) startTS() uint64 {
 }
 
 func (s *Scanner) resolveCurrentLock(bo *retry.Backoffer, current *kvrpcpb.KvPair) error {
-	ctx := context.Background()
-	val, err := s.snapshot.get(ctx, bo, current.Key)
+	val, err := s.snapshot.get(s.getCtx(), bo, current.Key)
 	if err != nil {
 		return err
 	}
