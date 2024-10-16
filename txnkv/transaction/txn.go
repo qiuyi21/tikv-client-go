@@ -241,6 +241,10 @@ func (txn *KVTxn) Iter(k []byte, upperBound []byte) (unionstore.Iterator, error)
 	return txn.us.Iter(k, upperBound)
 }
 
+func (txn *KVTxn) IterWithContext(ctx context.Context, k []byte, upperBound []byte) (unionstore.Iterator, error) {
+	return txn.us.IterWithContext(ctx, k, upperBound)
+}
+
 // IterReverse creates a reversed Iterator positioned on the first entry which key is less than k.
 func (txn *KVTxn) IterReverse(k []byte) (unionstore.Iterator, error) {
 	return txn.us.IterReverse(k)

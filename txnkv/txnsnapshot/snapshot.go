@@ -752,8 +752,12 @@ func (s *KVSnapshot) mergeExecDetail(detail *kvrpcpb.ExecDetailsV2) {
 
 // Iter return a list of key-value pair after `k`.
 func (s *KVSnapshot) Iter(k []byte, upperBound []byte) (unionstore.Iterator, error) {
+	return s.IterWithContext(s.Ctx, k, upperBound)
+}
+
+func (s *KVSnapshot) IterWithContext(ctx context.Context, k []byte, upperBound []byte) (unionstore.Iterator, error) {
 	scanner, err := newScanner(s, k, upperBound, s.scanBatchSize, false)
-	scanner.ctx = s.Ctx
+	scanner.ctx = ctx
 	return scanner, err
 }
 

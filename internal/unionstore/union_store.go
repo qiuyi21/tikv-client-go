@@ -75,6 +75,10 @@ type uSnapshot interface {
 	IterReverse(k []byte) (Iterator, error)
 }
 
+type snapshotIter interface {
+	IterWithContext(ctx context.Context, k []byte, upperBound []byte) (Iterator, error)
+}
+
 // KVUnionStore is an in-memory Store which contains a buffer for write and a
 // snapshot for read.
 type KVUnionStore struct {
@@ -117,6 +121,18 @@ func (us *KVUnionStore) Iter(k, upperBound []byte) (Iterator, error) {
 		return nil, err
 	}
 	retrieverIt, err := us.snapshot.Iter(k, upperBound)
+	if err != nil {
+		return nil, err
+	}
+	return NewUnionIter(bufferIt, retrieverIt, false)
+}
+
+func (us *KVUnionStore) IterWithContext(ctx context.Context, k, upperBound []byte) (Iterator, error) {
+	bufferIt, err := us.memBuffer.Iter(k, upperBound)
+	if err != nil {
+		return nil, err
+	}
+	retrieverIt, err := us.snapshot.(snapshotIter).IterWithContext(ctx, k, upperBound)
 	if err != nil {
 		return nil, err
 	}
